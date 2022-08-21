@@ -1,8 +1,6 @@
 use rand::random;
-use std::fs;
 use std::{thread, time};
 
-#[derive(Debug)]
 struct Chip8 {
     v: [u8; 0x10],
     i: usize,
