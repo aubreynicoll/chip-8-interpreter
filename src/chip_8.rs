@@ -2,6 +2,27 @@ use rand;
 use std::thread;
 use std::time;
 
+const SPRITE_POINTER: usize = 0x20;
+const SPRITE_SIZE: usize = 5;
+const SPRITE_DATA: [u8; 80] = [
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+];
+
 pub struct Chip8 {
     v: [u8; 0x10],
     i: usize,
@@ -14,7 +35,7 @@ pub struct Chip8 {
 
 impl Chip8 {
     pub fn new() -> Self {
-        Chip8 {
+        let mut new_c8 = Chip8 {
             v: [0x0; 0x10],
             i: 0x0,
             dt: 0x0,
@@ -22,7 +43,13 @@ impl Chip8 {
             pc: 0x200,
             sp: 0x0,
             ram: [0x0; 0x1000],
+        };
+
+        for (i, &byte) in SPRITE_DATA.iter().enumerate() {
+            new_c8.ram[SPRITE_POINTER + i] = byte;
         }
+
+        new_c8
     }
 
     pub fn load(&mut self, rom: &[u8]) {
@@ -380,7 +407,7 @@ impl Chip8 {
         thread::sleep(dur);
     }
 
-    fn print_registers(&self) {
+    pub fn print_registers(&self) {
         println!("---Registers---");
         for (i, v) in self.v.iter().enumerate() {
             println!("v[{:x}]: {:#04x}", i, v);
@@ -392,7 +419,7 @@ impl Chip8 {
         println!("sp: {:#05x}", self.sp);
     }
 
-    fn print_memory(&self) {
+    pub fn print_memory(&self) {
         println!("---Memory---");
         for (i, byte) in self.ram.iter().enumerate() {
             println!("{:#05x}: {:#04x}", i, byte);

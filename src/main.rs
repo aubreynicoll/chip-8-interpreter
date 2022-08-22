@@ -1,7 +1,6 @@
 mod chip_8;
 
 use chip_8::Chip8;
-use std::fs;
 
 fn main() {
     let mut c8 = Chip8::new();
