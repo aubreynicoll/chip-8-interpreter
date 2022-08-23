@@ -58,13 +58,6 @@ impl Chip8 {
         }
     }
 
-    pub fn run(&mut self) {
-        loop {
-            self.execute();
-            Self::sleep();
-        }
-    }
-
     fn get_next_opcode(&mut self) -> u16 {
         let msb = self.ram[self.pc];
         let lsb = self.ram[self.pc + 1];
@@ -100,7 +93,7 @@ impl Chip8 {
         return addr;
     }
 
-    fn execute(&mut self) {
+    pub fn execute(&mut self, key_input: Option<u8>) {
         let opcode = self.get_next_opcode();
         let addr = (opcode & 0xFFF) as usize;
         let x = ((opcode >> 8) & 0xF) as usize;
@@ -402,7 +395,7 @@ impl Chip8 {
         }
     }
 
-    fn sleep() {
+    pub fn sleep() {
         let dur = time::Duration::from_secs(1);
         thread::sleep(dur);
     }
