@@ -23,6 +23,29 @@ const SPRITE_DATA: [u8; 80] = [
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
+pub struct Key {
+    value: u8,
+}
+
+impl Key {
+    pub fn new(value: u8) -> Self {
+        if value > 0xF {
+            panic!("Expected value between 0x0 and 0xF, got {}", value);
+        }
+
+        Key { value }
+    }
+
+    pub fn value(&self) -> &u8 {
+        &self.value
+    }
+}
+
+pub trait KeyboardService {
+    fn is_key_pressed(&self, key: Key) -> bool;
+    fn get_pressed_key(&self) -> Option<Key>;
+}
+
 pub struct Chip8 {
     v: [u8; 0x10],
     i: usize,
@@ -93,7 +116,7 @@ impl Chip8 {
         return addr;
     }
 
-    pub fn execute(&mut self, key_input: Option<u8>) {
+    pub fn execute(&mut self, key_input: Option<Key>) {
         let opcode = self.get_next_opcode();
         let addr = (opcode & 0xFFF) as usize;
         let x = ((opcode >> 8) & 0xF) as usize;
