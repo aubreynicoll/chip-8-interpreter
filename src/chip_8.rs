@@ -41,12 +41,15 @@ impl Key {
     }
 }
 
-pub trait KeyboardService {
+pub trait KeyboardInterface {
     fn is_key_pressed(&self, key: Key) -> bool;
     fn get_pressed_key(&self) -> Option<Key>;
 }
 
-pub struct Chip8 {
+pub struct Chip8<K>
+where
+    K: KeyboardInterface,
+{
     v: [u8; 0x10],
     i: usize,
     dt: u8,
@@ -54,10 +57,14 @@ pub struct Chip8 {
     pc: usize,
     sp: usize,
     ram: [u8; 0x1000],
+    keyboard: K,
 }
 
-impl Chip8 {
-    pub fn new() -> Self {
+impl<K> Chip8<K>
+where
+    K: KeyboardInterface,
+{
+    pub fn new(keyboard: K) -> Self {
         let mut new_c8 = Chip8 {
             v: [0x0; 0x10],
             i: 0x0,
@@ -66,6 +73,7 @@ impl Chip8 {
             pc: 0x200,
             sp: 0x0,
             ram: [0x0; 0x1000],
+            keyboard,
         };
 
         for (i, &byte) in SPRITE_DATA.iter().enumerate() {
@@ -116,7 +124,7 @@ impl Chip8 {
         return addr;
     }
 
-    pub fn execute(&mut self, key_input: Option<Key>) {
+    pub fn execute(&mut self) {
         let opcode = self.get_next_opcode();
         let addr = (opcode & 0xFFF) as usize;
         let x = ((opcode >> 8) & 0xF) as usize;
@@ -418,7 +426,7 @@ impl Chip8 {
         }
     }
 
-    pub fn sleep() {
+    pub fn sleep(&self) {
         let dur = time::Duration::from_secs(1);
         thread::sleep(dur);
     }
