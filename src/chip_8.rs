@@ -46,9 +46,19 @@ pub trait KeyboardInterface {
     fn get_pressed_key(&self) -> Option<Key>;
 }
 
-pub struct Chip8<K>
+// Chip-8 Display rendered 64x32 monochrome
+// x values are packed descending for easy shifting, MSB = x[63] and LSB = x[0]
+// y values are packed ascending, array[0] = y[0] and array[31] = y[31]
+pub type BitMap = [u64; 0x20];
+
+pub trait DisplayInterface {
+    fn draw(&self, bitmap: &BitMap);
+}
+
+pub struct Chip8<K, D>
 where
     K: KeyboardInterface,
+    D: DisplayInterface,
 {
     v: [u8; 0x10],
     i: usize,
@@ -57,14 +67,17 @@ where
     pc: usize,
     sp: usize,
     ram: [u8; 0x1000],
+    vram: BitMap,
     keyboard: K,
+    display: D,
 }
 
-impl<K> Chip8<K>
+impl<K, D> Chip8<K, D>
 where
     K: KeyboardInterface,
+    D: DisplayInterface,
 {
-    pub fn new(keyboard: K) -> Self {
+    pub fn new(keyboard: K, display: D) -> Self {
         let mut new_c8 = Chip8 {
             v: [0x0; 0x10],
             i: 0x0,
@@ -73,12 +86,18 @@ where
             pc: 0x200,
             sp: 0x0,
             ram: [0x0; 0x1000],
+            vram: [0x0; 0x20],
             keyboard,
+            display,
         };
 
+        // initialize sprite data to system memory
         for (i, &byte) in SPRITE_DATA.iter().enumerate() {
             new_c8.ram[SPRITE_POINTER + i] = byte;
         }
+
+        // draw initial blank state
+        new_c8.display.draw(&new_c8.vram);
 
         new_c8
     }

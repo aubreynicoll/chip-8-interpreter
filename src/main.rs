@@ -1,19 +1,20 @@
 extern crate sdl2;
 
 mod chip_8;
+mod display;
 mod keyboard;
 
 use chip_8::Chip8;
+use display::Display;
 use keyboard::Keyboard;
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
-use sdl2::pixels::Color;
 use std::cell::RefCell;
 use std::process;
 use std::rc::Rc;
 
-const WINDOW_WIDTH: u32 = 800;
-const WINDOW_HEIGHT: u32 = 600;
+const WINDOW_WIDTH: u32 = 64;
+const WINDOW_HEIGHT: u32 = 32;
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -24,19 +25,16 @@ fn main() {
         .build()
         .unwrap();
 
-    let mut canvas = window.into_canvas().build().unwrap();
+    let canvas = Rc::new(RefCell::new(window.into_canvas().build().unwrap()));
     let event_pump = Rc::new(RefCell::new(sdl_context.event_pump().unwrap()));
 
     let keyboard = Keyboard::new(Rc::clone(&event_pump));
-    let mut c8 = Chip8::new(keyboard);
+    let display = Display::new(Rc::clone(&canvas));
+    let mut c8 = Chip8::new(keyboard, display);
 
     c8.load(&[0x12, 0x00]);
 
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-
     loop {
-        canvas.clear();
-
         for event in event_pump.borrow_mut().poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -49,8 +47,6 @@ fn main() {
         }
 
         c8.execute();
-
-        canvas.present();
 
         c8.sleep();
     }
