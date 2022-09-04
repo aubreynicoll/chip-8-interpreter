@@ -344,21 +344,36 @@ where
                 self.v[x] = random_byte & val;
             }
             0xD => {
-                // TODO
                 // display n-byte sprite on screen at point (x, y)
-                todo!();
+                let n = (val & 0xF) as usize;
+                self.v[0xF] = 0;
+
+                for row in 0..n {
+                    let byte = self.ram[self.i + row];
+                    let sprite_row = byte.reverse_bits() as u64;
+
+                    let previous = self.vram[y + row] & 0xFF << x;
+
+                    self.vram[y + row] ^= sprite_row << x;
+
+                    if self.vram[y + row] & previous < previous {
+                        self.v[0xF] = 1;
+                    }
+                }
             }
             0xE => {
                 match opcode & 0xFF {
                     0x9E => {
-                        // TODO
                         // skip next op if key with value of v[x] is pressed
-                        todo!();
+                        if self.keyboard.is_key_pressed(Key::new(self.v[x])) {
+                            self.pc += 2;
+                        }
                     }
                     0xA1 => {
-                        // TODO
                         // skip next op if key with value of v[x] is NOT pressed
-                        todo!();
+                        if !self.keyboard.is_key_pressed(Key::new(self.v[x])) {
+                            self.pc += 2;
+                        }
                     }
                     _ => panic!("invalid opcode: {}", opcode),
                 }
@@ -372,9 +387,11 @@ where
                         self.v[x] = self.dt;
                     }
                     0x0A => {
-                        // TODO
                         // wait for key press, store value in v[x]
-                        todo!();
+                        match self.keyboard.get_pressed_key() {
+                            Some(key) => self.v[x] = key.value,
+                            None => self.pc -= 2,
+                        }
                     }
                     0x15 => {
                         // set dt to value of v[x]
@@ -395,9 +412,8 @@ where
                         self.i += self.v[x] as usize;
                     }
                     0x29 => {
-                        // TODO
                         // set i to sprite for value in v[x]
-                        todo!();
+                        self.i = SPRITE_POINTER + self.v[x] as usize * SPRITE_SIZE;
                     }
                     0x33 => {
                         // BCD of v[x] in i, i+1, i+2
