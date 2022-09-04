@@ -119,7 +119,7 @@ where
 
     fn push_stack(&mut self, addr: usize) {
         if self.sp >= 0x20 {
-            panic!("stack overflow");
+            self.panic("stack overflow");
         }
 
         let msb = (addr >> 8) as u8;
@@ -132,7 +132,7 @@ where
 
     fn pop_stack(&mut self) -> usize {
         if self.sp == 0 {
-            panic!("stack empty");
+            self.panic("stack empty");
         }
 
         self.sp -= 2;
@@ -166,7 +166,7 @@ where
 
                         self.pc = addr;
                     }
-                    _ => panic!("invalid opcode: {}", opcode),
+                    _ => self.panic("bad opcode"),
                 }
             }
             0x1 => {
@@ -174,7 +174,7 @@ where
                 println!("{}: jump to {:#06x}", opcode, addr);
 
                 if addr < 0x200 {
-                    panic!("jump to reserved address");
+                    self.panic("jump to reserved address");
                 }
                 self.pc = addr;
             }
@@ -183,7 +183,7 @@ where
                 println!("{}: call subroutine at {:#06x}", opcode, addr);
 
                 if addr < 0x200 {
-                    panic!("call to reserved address");
+                    self.panic("call to reserved address");
                 }
                 self.push_stack(self.pc);
                 self.pc = addr;
@@ -214,7 +214,7 @@ where
                             self.pc += 2;
                         }
                     }
-                    _ => panic!("invalid opcode: {}", opcode),
+                    _ => self.panic("bad opcode"),
                 }
             }
             0x6 => {
@@ -304,7 +304,7 @@ where
                         self.v[0xF] = self.v[y] >> 7;
                         self.v[x] = self.v[y] << 1;
                     }
-                    _ => panic!("invalid opcode: {}", opcode),
+                    _ => self.panic("bad opcode"),
                 }
             }
             0x9 => {
@@ -317,7 +317,7 @@ where
                             self.pc += 2;
                         }
                     }
-                    _ => panic!("invalid opcode: {}", opcode),
+                    _ => self.panic("bad opcode"),
                 }
             }
             0xA => {
@@ -331,7 +331,7 @@ where
                 println!("{}: jump to {:#06x}", opcode, addr);
 
                 if addr < 0x200 {
-                    panic!("jump to reserved address");
+                    self.panic("jump to reserved address");
                 }
                 self.pc = addr;
             }
@@ -375,7 +375,7 @@ where
                             self.pc += 2;
                         }
                     }
-                    _ => panic!("invalid opcode: {}", opcode),
+                    _ => self.panic("bad opcode"),
                 }
             }
             0xF => {
@@ -421,7 +421,7 @@ where
                         println!("{}: store BCD of v[{}] starting at i", opcode, x);
 
                         if self.i < 0x200 {
-                            panic!("write to reserved memory");
+                            self.panic("write to reserved memory");
                         }
 
                         let val = self.v[x];
@@ -436,7 +436,7 @@ where
                         println!("{}: store v[0] through v[{}] starting at i", opcode, x);
 
                         if self.i < 0x200 {
-                            panic!("write to reserved memory");
+                            self.panic("write to reserved memory");
                         }
 
                         for n in 0..=x {
@@ -454,10 +454,10 @@ where
                             self.i += 1;
                         }
                     }
-                    _ => panic!("invalid opcode: {}", opcode),
+                    _ => self.panic("bad opcode"),
                 }
             }
-            _ => panic!("invalid opcode: {}", opcode),
+            _ => self.panic("bad opcode"),
         }
     }
 
@@ -483,5 +483,11 @@ where
         for (i, byte) in self.ram.iter().enumerate() {
             println!("{:#05x}: {:#04x}", i, byte);
         }
+    }
+
+    fn panic(&self, msg: &str) {
+        self.print_registers();
+        self.print_memory();
+        panic!("{}", msg);
     }
 }
