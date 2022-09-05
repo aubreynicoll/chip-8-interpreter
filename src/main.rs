@@ -35,8 +35,6 @@ struct Config {
 fn main() {
     let config = Config::parse();
 
-    let rom = fs::read(config.file).unwrap();
-
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
@@ -52,7 +50,9 @@ fn main() {
     let display = Display::new(Rc::clone(&canvas));
     let mut c8 = Chip8::new(keyboard, display);
 
-    c8.load(&rom);
+    if let Ok(rom) = fs::read(config.file) {
+        c8.load(&rom);
+    }
 
     loop {
         for event in event_pump.borrow_mut().poll_iter() {
