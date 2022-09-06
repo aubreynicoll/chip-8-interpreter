@@ -157,7 +157,10 @@ where
                     0x0E0 => {
                         // clear display
                         console::debug("00E0: clear display");
-                        todo!();
+                        for row in self.vram.iter_mut() {
+                            *row = 0;
+                        }
+                        self.display.draw(&self.vram);
                     }
                     0x0EE => {
                         // return
