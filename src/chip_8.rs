@@ -548,7 +548,7 @@ where
     fn print_registers(&self) {
         console::debug("---Registers---");
         for (i, v) in self.v.iter().enumerate() {
-            println!("v[{:x}]: {:#04x}", i, v);
+            console::debug(&format!("v[{:x}]: {:#04x}", i, v));
         }
         console::debug(&format!("i: {:#05x}", self.i));
         console::debug(&format!("st: {:#04x}", self.st));
