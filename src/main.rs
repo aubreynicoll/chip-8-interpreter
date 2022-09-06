@@ -1,6 +1,7 @@
 extern crate sdl2;
 
 mod chip_8;
+mod console;
 mod display;
 mod keyboard;
 

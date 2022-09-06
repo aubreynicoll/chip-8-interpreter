@@ -1,3 +1,4 @@
+use crate::console;
 use rand;
 use std::thread;
 use std::time;
@@ -155,14 +156,14 @@ where
                 match opcode & 0xFFF {
                     0x0E0 => {
                         // clear display
-                        println!("{}: clear display", opcode);
+                        console::debug("00E0: clear display");
                         todo!();
                     }
                     0x0EE => {
                         // return
                         let addr = self.pop_stack();
 
-                        println!("{}: return (to addr {:#06x})", opcode, addr);
+                        console::debug(&format!("00EE: return (to addr {:#05x})", addr));
 
                         self.pc = addr;
                     }
@@ -171,7 +172,7 @@ where
             }
             0x1 => {
                 // jump to addr
-                println!("{}: jump to {:#06x}", opcode, addr);
+                console::debug(&format!("{:x}: jump to {:#05x}", opcode, addr));
 
                 if addr < 0x200 {
                     self.panic("jump to reserved address");
@@ -180,7 +181,7 @@ where
             }
             0x2 => {
                 // call subroutine
-                println!("{}: call subroutine at {:#06x}", opcode, addr);
+                console::debug(&format!("{:x}: call subroutine at {:#05x}", opcode, addr));
 
                 if addr < 0x200 {
                     self.panic("call to reserved address");
@@ -190,7 +191,10 @@ where
             }
             0x3 => {
                 // skip next op if v[x] == val
-                println!("{}: skip next op if v[{}] == {}", opcode, x, val);
+                console::debug(&format!(
+                    "{:x}: skip next op if v[{:x}] == {:x}",
+                    opcode, x, val
+                ));
 
                 if self.v[x] == val {
                     self.pc += 2;
@@ -198,7 +202,10 @@ where
             }
             0x4 => {
                 // skip next op if v[x] != val
-                println!("{}: skip next op if v[{}] != {}", opcode, x, val);
+                console::debug(&format!(
+                    "{:x}: skip next op if v[{:x}] != {:x}",
+                    opcode, x, val
+                ));
 
                 if self.v[x] != val {
                     self.pc += 2;
@@ -208,7 +215,10 @@ where
                 match opcode & 0xF {
                     0x0 => {
                         // skip next op if v[x] == v[y]
-                        println!("{}: skip next op if v[{}] == v[{}]", opcode, x, y);
+                        console::debug(&format!(
+                            "{:x}: skip next op if v[{:x}] == v[{:x}]",
+                            opcode, x, y
+                        ));
 
                         if self.v[x] == self.v[y] {
                             self.pc += 2;
@@ -219,13 +229,13 @@ where
             }
             0x6 => {
                 // v[x] = val
-                println!("{}: set v[{}] to {}", opcode, x, val);
+                console::debug(&format!("{:x}: set v[{:x}] to {:x}", opcode, x, val));
 
                 self.v[x] = val;
             }
             0x7 => {
                 // v[x] += val
-                println!("{}: add {} to v[{}]", opcode, val, x);
+                console::debug(&format!("{:x}: add {:x} to v[{:x}]", opcode, val, x));
 
                 self.v[x] += val;
             }
@@ -233,32 +243,47 @@ where
                 match opcode & 0xF {
                     0x0 => {
                         // v[x] = v[y]
-                        println!("{}: set v[{}] to value of v[{}]", opcode, x, y);
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to value of v[{:x}]",
+                            opcode, x, y
+                        ));
 
                         self.v[x] = self.v[y];
                     }
                     0x1 => {
                         // v[x] |= v[y]
-                        println!("{}: set v[{}] to value of v[{}] | v[{}]", opcode, x, x, y);
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to value of v[{:x}] | v[{:x}]",
+                            opcode, x, x, y
+                        ));
 
                         self.v[x] |= self.v[y];
                     }
                     0x2 => {
                         // v[x] &= v[y]
-                        println!("{}: set v[{}] to value of v[{}] & v[{}]", opcode, x, x, y);
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to value of v[{:x}] & v[{:x}]",
+                            opcode, x, x, y
+                        ));
 
                         self.v[x] &= self.v[y];
                     }
                     0x3 => {
                         // v[x] ^= v[y]
-                        println!("{}: set v[{}] to value of v[{}] ^ v[{}]", opcode, x, x, y);
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to value of v[{:x}] ^ v[{:x}]",
+                            opcode, x, x, y
+                        ));
 
                         self.v[x] ^= self.v[y];
                     }
                     0x4 => {
                         // v[x] += v[y]
                         // set v[F] to 1 if overflow occurs, else 0
-                        println!("{}: set v[{}] to v[{}] + v[{}]", opcode, x, x, y);
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to v[{:x}] + v[{:x}]",
+                            opcode, x, x, y
+                        ));
 
                         let sum = self.v[x].wrapping_add(self.v[y]);
                         self.v[0xF] = if sum < self.v[x] { 1 } else { 0 };
@@ -267,7 +292,10 @@ where
                     0x5 => {
                         // v[x] -= v[y]
                         // set v[F] to 1 if overflow DOES NOT occur, else 0
-                        println!("{}: set v[{}] to v[{}] - v[{}]", opcode, x, x, y);
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to v[{:x}] - v[{:x}]",
+                            opcode, x, x, y
+                        ));
 
                         let diff = self.v[x].wrapping_sub(self.v[y]);
                         self.v[0xF] = if diff > self.v[x] { 0 } else { 1 };
@@ -276,10 +304,10 @@ where
                     0x6 => {
                         // set v[F] to value of v[y] & 1 (value of lsb)
                         // v[x] = v[y] >> 1
-                        println!(
-                            "{}: set v[{}] to value of v[{}] shifted right by 1 bit (div by 2)",
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to value of v[{:x}] shifted right by 1 bit (div by 2)",
                             opcode, x, y
-                        );
+                        ));
 
                         self.v[0xF] = self.v[y] & 1;
                         self.v[x] = self.v[y] >> 1;
@@ -287,7 +315,10 @@ where
                     0x7 => {
                         // v[x] = v[y] - v[x]
                         // set v[F] to 1 if overflow DOES NOT occur, else 0
-                        println!("{}: set[{}] to v[{}] - v[{}]", opcode, x, y, x);
+                        console::debug(&format!(
+                            "{:x}: set[{:x}] to v[{:x}] - v[{:x}]",
+                            opcode, x, y, x
+                        ));
 
                         let diff = self.v[y].wrapping_sub(self.v[x]);
                         self.v[0xF] = if diff > self.v[y] { 0 } else { 1 };
@@ -296,10 +327,10 @@ where
                     0xE => {
                         // set v[F] to v[y] >> 7 (value of msb)
                         // v[x] = v[y] << 1
-                        println!(
-                            "{}: set v[{}] to value of v[{}] shifted left by 1 bit (mult by 2)",
+                        console::debug(&format!(
+                            "{:x}: set v[{:x}] to value of v[{:x}] shifted left by 1 bit (mult by 2)",
                             opcode, x, y
-                        );
+                        ));
 
                         self.v[0xF] = self.v[y] >> 7;
                         self.v[x] = self.v[y] << 1;
@@ -311,7 +342,10 @@ where
                 match opcode & 0xF {
                     0x0 => {
                         // skip next op if v[x] != v[y]
-                        println!("{}: skip next op if v[{}] != v[{}]", opcode, x, y);
+                        console::debug(&format!(
+                            "{:x}: skip next op if v[{:x}] != v[{:x}]",
+                            opcode, x, y
+                        ));
 
                         if self.v[x] != self.v[y] {
                             self.pc += 2;
@@ -322,13 +356,13 @@ where
             }
             0xA => {
                 // set i to addr
-                println!("{}: set i to {:#06x}", opcode, addr);
+                console::debug(&format!("{:x}: set i to {:#05x}", opcode, addr));
 
                 self.i = addr;
             }
             0xB => {
                 // jump to addr + v[0]
-                println!("{}: jump to {:#06x}", opcode, addr);
+                console::debug(&format!("{:x}: jump to {:#05x}", opcode, addr));
 
                 if addr < 0x200 {
                     self.panic("jump to reserved address");
@@ -339,12 +373,17 @@ where
                 // v[x] = random_byte & val
                 let random_byte = rand::random::<u8>();
 
-                println!("{}: set v[{}] to random & val", opcode, x);
+                console::debug(&format!("{:x}: set v[{:x}] to random & val", opcode, x));
 
                 self.v[x] = random_byte & val;
             }
             0xD => {
                 // display n-byte sprite on screen at point (x, y)
+                console::debug(&format!(
+                    "{:x}: display n bytes on screen at {}, {}",
+                    opcode, x, y
+                ));
+
                 let n = (val & 0xF) as usize;
                 self.v[0xF] = 0;
 
@@ -365,12 +404,20 @@ where
                 match opcode & 0xFF {
                     0x9E => {
                         // skip next op if key with value of v[x] is pressed
+                        console::debug(&format!(
+                            "{:x}: skip next op if key {} is pressed",
+                            opcode, x
+                        ));
                         if self.keyboard.is_key_pressed(Key::new(self.v[x])) {
                             self.pc += 2;
                         }
                     }
                     0xA1 => {
                         // skip next op if key with value of v[x] is NOT pressed
+                        console::debug(&format!(
+                            "{:x}: skip next op if key {} is NOT pressed",
+                            opcode, x
+                        ));
                         if !self.keyboard.is_key_pressed(Key::new(self.v[x])) {
                             self.pc += 2;
                         }
@@ -382,12 +429,17 @@ where
                 match opcode & 0xFF {
                     0x07 => {
                         // set v[x] to value of dt
-                        println!("{}: set v[{}] to value of dt", opcode, x);
+                        console::debug(&format!("{:x}: set v[{:x}] to value of dt", opcode, x));
 
                         self.v[x] = self.dt;
                     }
                     0x0A => {
                         // wait for key press, store value in v[x]
+                        console::debug(&format!(
+                            "{:x}: wait for pressed key, store value in v[{:x}]",
+                            opcode, x
+                        ));
+
                         match self.keyboard.get_pressed_key() {
                             Some(key) => self.v[x] = key.value,
                             None => self.pc -= 2,
@@ -395,30 +447,34 @@ where
                     }
                     0x15 => {
                         // set dt to value of v[x]
-                        println!("{}: set dt to value of v[{}]", opcode, x);
+                        console::debug(&format!("{:x}: set dt to value of v[{:x}]", opcode, x));
 
                         self.dt = self.v[x];
                     }
                     0x18 => {
                         // set st to value of v[x]
-                        println!("{}: set st to value of v[{}]", opcode, x);
+                        console::debug(&format!("{:x}: set st to value of v[{:x}]", opcode, x));
 
                         self.st = self.v[x];
                     }
                     0x1E => {
                         // i += v[x]
-                        println!("{}: set i to i + v[{}]", opcode, x);
+                        console::debug(&format!("{:x}: set i to i + v[{:x}]", opcode, x));
 
                         self.i += self.v[x] as usize;
                     }
                     0x29 => {
                         // set i to sprite for value in v[x]
+                        console::debug(&format!(
+                            "{:x}: set i to sprite value of {:x}",
+                            opcode, self.v[x],
+                        ));
                         self.i = SPRITE_POINTER + self.v[x] as usize * SPRITE_SIZE;
                     }
                     0x33 => {
                         // BCD of v[x] in i, i+1, i+2
                         // according to sources, this does not mutate the value of i
-                        println!("{}: store BCD of v[{}] starting at i", opcode, x);
+                        console::debug(&format!("{}: store BCD of v[{}] starting at i", opcode, x));
 
                         if self.i < 0x200 {
                             self.panic("write to reserved memory");
@@ -433,7 +489,10 @@ where
                     0x55 => {
                         // store v[0]..=v[x] in memory starting at i
                         // sets i to i + n + 1
-                        println!("{}: store v[0] through v[{}] starting at i", opcode, x);
+                        console::debug(&format!(
+                            "{}: store v[0] through v[{}] starting at i",
+                            opcode, x
+                        ));
 
                         if self.i < 0x200 {
                             self.panic("write to reserved memory");
@@ -447,7 +506,10 @@ where
                     0x65 => {
                         // read memory into v[0] through v[x] starting at i
                         // sets i to i + n + 1
-                        println!("{}: read into v[0] through v[{}] starting at i", opcode, x);
+                        console::debug(&format!(
+                            "{}: read into v[0] through v[{}] starting at i",
+                            opcode, x
+                        ));
 
                         for n in 0..=x {
                             self.v[n] = self.ram[self.i];
@@ -466,26 +528,27 @@ where
         thread::sleep(dur);
     }
 
-    pub fn print_registers(&self) {
-        println!("---Registers---");
+    fn print_registers(&self) {
+        console::debug("---Registers---");
         for (i, v) in self.v.iter().enumerate() {
             println!("v[{:x}]: {:#04x}", i, v);
         }
-        println!("i: {:#05x}", self.i);
-        println!("st: {:#04x}", self.st);
-        println!("dt: {:#04x}", self.dt);
-        println!("pc: {:#05x}", self.pc);
-        println!("sp: {:#05x}", self.sp);
+        console::debug(&format!("i: {:#05x}", self.i));
+        console::debug(&format!("st: {:#04x}", self.st));
+        console::debug(&format!("dt: {:#04x}", self.dt));
+        console::debug(&format!("pc: {:#05x}", self.pc));
+        console::debug(&format!("sp: {:#05x}", self.sp));
     }
 
-    pub fn print_memory(&self) {
-        println!("---Memory---");
+    fn print_memory(&self) {
+        console::debug("---Memory---");
         for (i, byte) in self.ram.iter().enumerate() {
-            println!("{:#05x}: {:#04x}", i, byte);
+            console::debug(&format!("{:#05x}: {:#04x}", i, byte));
         }
     }
 
     fn panic(&self, msg: &str) {
+        console::debug(&format!("panic: {}", msg));
         self.print_registers();
         self.print_memory();
         panic!("{}", msg);
