@@ -61,6 +61,7 @@ where
     K: KeyboardInterface,
     D: DisplayInterface,
 {
+    cycle: usize,
     v: [u8; 0x10],
     i: usize,
     dt: u8,
@@ -80,6 +81,7 @@ where
 {
     pub fn new(keyboard: K, display: D) -> Self {
         let mut new_c8 = Chip8 {
+            cycle: 0,
             v: [0x0; 0x10],
             i: 0x0,
             dt: 0x0,
@@ -109,13 +111,12 @@ where
         }
     }
 
-    fn get_next_opcode(&mut self) -> u16 {
+    fn fetch_op(&mut self) -> u16 {
         let msb = self.ram[self.pc];
         let lsb = self.ram[self.pc + 1];
-        self.pc += 2;
 
-        let opcode = ((msb as u16) << 8) + lsb as u16;
-        return opcode;
+        let op = ((msb as u16) << 8) + lsb as u16;
+        return op;
     }
 
     fn push_stack(&mut self, addr: usize) {
@@ -145,12 +146,16 @@ where
     }
 
     pub fn execute(&mut self) {
-        let opcode = self.get_next_opcode();
+        // fetch
+        let opcode = self.fetch_op();
+
+        // decode
         let addr = (opcode & 0xFFF) as usize;
         let x = ((opcode >> 8) & 0xF) as usize;
         let y = ((opcode >> 4) & 0xF) as usize;
         let val = opcode as u8;
 
+        // execute, memory access, & write back
         match opcode >> 12 {
             0x0 => {
                 match opcode & 0xFFF {
@@ -524,10 +529,19 @@ where
             }
             _ => self.panic("bad opcode"),
         }
+
+        // update timers & PC
+        if self.cycle & 0x7 == 0 {
+            // sound timers are reduced every 8 cycles, or approx. 60 Hz
+            self.dt = self.dt.saturating_sub(1);
+            self.st = self.st.saturating_sub(1);
+        }
+        self.pc += 2;
+        self.cycle += 1;
     }
 
     pub fn sleep(&self) {
-        let dur = time::Duration::from_secs(1);
+        let dur = time::Duration::from_millis(2);
         thread::sleep(dur);
     }
 
