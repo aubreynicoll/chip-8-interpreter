@@ -1,6 +1,10 @@
 use crate::chip_8::{BitMap, DisplayInterface};
-use sdl2::{pixels::Color, rect::Point, render::Canvas, video::Window};
-use std::{cell::RefCell, rc::Rc};
+use sdl2::{pixels::Color, rect::Rect, render::Canvas, video::Window};
+use std::{cell::RefCell, convert::TryInto, rc::Rc};
+
+pub const SCALE_FACTOR: u32 = 20;
+pub const WINDOW_WIDTH: u32 = 64 * SCALE_FACTOR;
+pub const WINDOW_HEIGHT: u32 = 32 * SCALE_FACTOR;
 
 pub struct Display {
     canvas: Rc<RefCell<Canvas<Window>>>,
@@ -20,14 +24,23 @@ impl DisplayInterface for Display {
         canvas.clear();
 
         canvas.set_draw_color(Color::RGB(255, 255, 255));
+
         for row in 0..32 {
             let data = bitmap[row as usize];
             for col in 0..64 {
                 if data & (1 << col) != 0 {
-                    canvas.draw_point(Point::new(col, row)).unwrap();
+                    let r = Rect::new(
+                        col * SCALE_FACTOR as i32,
+                        row * SCALE_FACTOR as i32,
+                        SCALE_FACTOR,
+                        SCALE_FACTOR,
+                    );
+                    canvas.draw_rect(r).unwrap();
+                    canvas.fill_rect(r).unwrap();
                 }
             }
         }
+
         canvas.present();
     }
 }

@@ -7,7 +7,7 @@ mod keyboard;
 
 use chip_8::Chip8;
 use clap::Parser;
-use display::Display;
+use display::{Display, WINDOW_HEIGHT, WINDOW_WIDTH};
 use keyboard::Keyboard;
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
@@ -16,9 +16,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::process;
 use std::rc::Rc;
-
-const WINDOW_WIDTH: u32 = 64;
-const WINDOW_HEIGHT: u32 = 32;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]

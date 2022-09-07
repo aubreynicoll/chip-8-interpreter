@@ -246,7 +246,7 @@ where
                 // v[x] += val
                 console::debug(&format!("{:x}: add {:x} to v[{:x}]", opcode, val, x));
 
-                self.v[x] += val;
+                self.v[x] = self.v[x].wrapping_add(val);
             }
             0x8 => {
                 match opcode & 0xF {
@@ -388,12 +388,15 @@ where
             }
             0xD => {
                 // display n-byte sprite on screen at point (x, y)
+                let n = (val & 0xF) as usize;
+                let x = self.v[x] as usize;
+                let y = self.v[y] as usize;
+
                 console::debug(&format!(
-                    "{:x}: display n bytes on screen at {}, {}",
-                    opcode, x, y
+                    "{:x}: display {} bytes on screen at {}, {}",
+                    opcode, n, x, y
                 ));
 
-                let n = (val & 0xF) as usize;
                 self.v[0xF] = 0;
 
                 for row in 0..n {
@@ -408,6 +411,8 @@ where
                         self.v[0xF] = 1;
                     }
                 }
+
+                self.display.draw(&self.vram);
             }
             0xE => {
                 match opcode & 0xFF {
