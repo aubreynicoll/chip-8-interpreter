@@ -1,6 +1,6 @@
 use crate::chip_8::{BitMap, DisplayInterface};
 use sdl2::{pixels::Color, rect::Rect, render::Canvas, video::Window};
-use std::{cell::RefCell, convert::TryInto, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 pub const SCALE_FACTOR: u32 = 20;
 pub const WINDOW_WIDTH: u32 = 64 * SCALE_FACTOR;
