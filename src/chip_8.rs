@@ -114,6 +114,7 @@ where
     fn fetch_op(&mut self) -> u16 {
         let msb = self.ram[self.pc];
         let lsb = self.ram[self.pc + 1];
+        self.pc += 2;
 
         let op = ((msb as u16) << 8) + lsb as u16;
         return op;
@@ -530,13 +531,12 @@ where
             _ => self.panic("bad opcode"),
         }
 
-        // update timers & PC
+        // update timers & cycle
         if self.cycle & 0x7 == 0 {
             // sound timers are reduced every 8 cycles, or approx. 60 Hz
             self.dt = self.dt.saturating_sub(1);
             self.st = self.st.saturating_sub(1);
         }
-        self.pc += 2;
         self.cycle += 1;
     }
 
