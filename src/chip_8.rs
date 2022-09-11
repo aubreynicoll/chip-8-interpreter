@@ -53,13 +53,19 @@ pub trait KeyboardInterface {
 pub type BitMap = [u64; 0x20];
 
 pub trait DisplayInterface {
-    fn draw(&self, bitmap: &BitMap);
+    fn draw(&mut self, bitmap: &BitMap);
 }
 
-pub struct Chip8<K, D>
+pub trait SoundInterface {
+    fn start(&self);
+    fn stop(&self);
+}
+
+pub struct Chip8<K, D, S>
 where
     K: KeyboardInterface,
     D: DisplayInterface,
+    S: SoundInterface,
 {
     cycle: usize,
     v: [u8; 0x10],
@@ -72,14 +78,16 @@ where
     vram: BitMap,
     keyboard: K,
     display: D,
+    sound: S,
 }
 
-impl<K, D> Chip8<K, D>
+impl<K, D, S> Chip8<K, D, S>
 where
     K: KeyboardInterface,
     D: DisplayInterface,
+    S: SoundInterface,
 {
-    pub fn new(keyboard: K, display: D) -> Self {
+    pub fn new(keyboard: K, display: D, sound: S) -> Self {
         let mut new_c8 = Chip8 {
             cycle: 0,
             v: [0x0; 0x10],
@@ -92,6 +100,7 @@ where
             vram: [0x0; 0x20],
             keyboard,
             display,
+            sound,
         };
 
         // initialize sprite data to system memory
@@ -470,6 +479,10 @@ where
                         console::debug(&format!("{:x}: set st to value of v[{:x}]", opcode, x));
 
                         self.st = self.v[x];
+
+                        if self.st != 0 {
+                            self.sound.start();
+                        }
                     }
                     0x1E => {
                         // i += v[x]
@@ -541,6 +554,10 @@ where
             // sound timers are reduced every 8 cycles, or approx. 60 Hz
             self.dt = self.dt.saturating_sub(1);
             self.st = self.st.saturating_sub(1);
+
+            if self.st == 0 {
+                self.sound.stop();
+            }
         }
         self.cycle += 1;
     }

@@ -4,13 +4,15 @@ mod chip_8;
 mod console;
 mod display;
 mod keyboard;
+mod sound;
 
 use chip_8::Chip8;
 use clap::Parser;
-use display::{Display, WINDOW_HEIGHT, WINDOW_WIDTH};
+use display::Display;
 use keyboard::Keyboard;
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
+use sound::Sound;
 use std::cell::RefCell;
 use std::fs;
 use std::path::PathBuf;
@@ -34,19 +36,13 @@ fn main() {
     let config = Config::parse();
 
     let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let window = video_subsystem
-        .window("Chip-8", WINDOW_WIDTH, WINDOW_HEIGHT)
-        .position_centered()
-        .build()
-        .unwrap();
 
-    let canvas = Rc::new(RefCell::new(window.into_canvas().build().unwrap()));
     let event_pump = Rc::new(RefCell::new(sdl_context.event_pump().unwrap()));
 
     let keyboard = Keyboard::new(Rc::clone(&event_pump));
-    let display = Display::new(Rc::clone(&canvas));
-    let mut c8 = Chip8::new(keyboard, display);
+    let display = Display::new(&sdl_context);
+    let sound = Sound::new(&sdl_context);
+    let mut c8 = Chip8::new(keyboard, display, sound);
 
     if let Ok(rom) = fs::read(config.file) {
         c8.load(&rom);
