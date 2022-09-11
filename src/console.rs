@@ -1,7 +1,7 @@
 use std::env;
 
-pub fn debug(msg: &str) {
+pub fn debug(get_msg: impl Fn() -> String) {
     if env::var("CHIP_8_DEBUG_MODE").is_ok() {
-        println!("{}", msg);
+        println!("{}", get_msg());
     }
 }

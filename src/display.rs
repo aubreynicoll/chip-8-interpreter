@@ -19,7 +19,7 @@ impl Display {
             .build()
             .unwrap();
 
-        let canvas = window.into_canvas().build().unwrap();
+        let canvas = window.into_canvas().present_vsync().build().unwrap();
 
         Display { canvas }
     }
